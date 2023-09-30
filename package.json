@@ -22,7 +22,10 @@
         "online",
         "homekit",
         "remote",
-        "control"
+        "control",
+        "home",
+        "bridge",
+        "levankhelo"
     ],
     "main": "index.js",
     "engines": {
