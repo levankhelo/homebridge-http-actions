@@ -2,18 +2,23 @@ const axios = require('axios');
 const pollingtoevent = require('polling-to-event');
 const pkgVersion = require('./package.json').version;
 
-let Service, Characteristic, Switch;
+let Service, Characteristic;
 
 module.exports = (homebridge) => {
   Service = homebridge.hap.Service;
-  Switch = homebridge.hap.Service.Switch;
   Characteristic = homebridge.hap.Characteristic;
   homebridge.registerAccessory('homebridge-http-actions', 'homebridge-http-actions', HTTPActions);
 };
 
-class HTTPService extends Switch {
+class HTTPService extends Service {
+  static UUID = "00000088-0000-1000-8000-0026BB765291";
+
   constructor(log, config, defaults) {
-    super(config.name, config.name);
+    super(config.name, HTTPService.UUID, config.name);
+    // super(config.name, config.name);
+    this.addCharacteristic(Characteristic.On);
+    this.addOptionalCharacteristic(Characteristic.Name);
+
     this.log = log;
     this.config = config;
     this.name = config.name;
