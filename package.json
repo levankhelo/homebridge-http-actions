@@ -1,7 +1,7 @@
 {
     "name": "homebridge-http-actions",
     "displayName": "homebridge-http-actions",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "author": "levankhelo",
     "description": "User defined services to be managed by HTTP requests",
     "license": "MIT",
