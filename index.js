@@ -6,11 +6,12 @@ let Service, Characteristic;
 
 module.exports = (homebridge) => {
   Service = homebridge.hap.Service;
+  Switch = homebridge.hap.Service.Switch;
   Characteristic = homebridge.hap.Characteristic;
   homebridge.registerAccessory('homebridge-http-actions', 'homebridge-http-actions', HTTPActions);
 };
 
-class HTTPService extends Service.Switch {
+class HTTPService extends Switch {
   constructor(log, config, defaults) {
     super(config.name, config.name);
     this.log = log;
