@@ -7,7 +7,7 @@ let Service, Characteristic;
 module.exports = (homebridge) => {
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
-  homebridge.registerAccessory('homebridge-http-actions', 'HTTP-Actions', HTTPActions);
+  homebridge.registerAccessory('homebridge-http-actions', 'homebridge-http-actions', HTTPActions);
 };
 
 class HTTPService extends Service.Switch {
@@ -77,7 +77,7 @@ class HTTPActions {
     } else {
       for (const deviceConfig of config.devices) {
         const deviceName = deviceConfig.name;
-        const deviceService = new HTTPService(this.log. deviceConfig, this.defaults);
+        const deviceService = new HTTPService(this.log, deviceConfig, this.defaults);
         deviceService.deviceConfig = deviceConfig; // Attach deviceConfig to the service
         deviceService
           .getCharacteristic(Characteristic.On)
