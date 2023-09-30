@@ -2,7 +2,7 @@ const axios = require('axios');
 const pollingtoevent = require('polling-to-event');
 const pkgVersion = require('./package.json').version;
 
-let Service, Characteristic;
+let Service, Characteristic, Switch;
 
 module.exports = (homebridge) => {
   Service = homebridge.hap.Service;
