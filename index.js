@@ -43,7 +43,7 @@ class HTTPService extends Service.Switch {
       const statusData = JSON.stringify(data);
       const switchService = scope;
       const switchConfig = switchService.switchConfig;
-      if (this.statusPattern != ) {
+      if (this.statusPattern) {
         const isOn = !!statusData.match(switchConfig.statusPattern);
         switchService.getCharacteristic(Characteristic.On).updateValue(isOn);
       }
