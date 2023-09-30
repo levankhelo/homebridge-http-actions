@@ -98,7 +98,7 @@
 							"description": "Endpoint to send Off request"
 						},
                         "statusCommand": {
-							"title": "Off endpoint",
+							"title": "Status endpoint",
 							"type": "string",
 							"required": false,
                             "default": "/status",
