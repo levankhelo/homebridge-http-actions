@@ -1,0 +1,39 @@
+{
+    "name": "homebridge-http-actions",
+    "displayName": "homebridge-http-actions",
+    "version": "0.0.1",
+    "author": "levankhelo",
+    "description": "User defined services to be managed by HTTP requests",
+    "license": "MIT",
+    "homepage": "https://github.com/levankhelo/homebridge-http-actions",
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/levankhelo/homebridge-http-actions"
+    },
+    "keywords": [
+      "homebridge-plugin",
+      "http",
+      "action",
+      "switch",
+      "arduino",
+      "server",
+      "api",
+      "manage",
+      "online",
+      "homekit",
+      "remote",
+      "control"
+    ],
+    "main": "index.js",
+    "engines": {
+      "node": ">=0.12.0",
+      "homebridge": ">=0.2.0"
+    },
+    "dependencies": {
+      "polling-to-event": "^2.1.0",
+      "axios": "^1.4.0"
+    },
+    "bugs": {
+      "url": "https://github.com/levankhelo/homebridge-http-actions/issues"
+    }
+  }

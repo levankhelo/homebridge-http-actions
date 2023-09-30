@@ -1,0 +1,270 @@
+const axios = require('axios');
+const pollingtoevent = require('polling-to-event');
+const pkgVersion = require('./package.json').version;
+
+let Service, Characteristic;
+
+module.exports = (homebridge) => {
+  Service = homebridge.hap.Service;
+  Characteristic = homebridge.hap.Characteristic;
+  homebridge.registerAccessory('homebridge-http-actions', 'HTTP-Actions', HTTPActions);
+};
+
+class HTTPService extends Service.Switch {
+  constructor(log, config, defaults) {
+    super(config.name, config.name);
+    this.log = log;
+    this.config = config;
+    this.name = config.name;
+    this.url = config.url || defaults.url;
+    this.onCommand = config.onCommand || defaults.onCommand;
+    this.offCommand = config.offCommand || defaults.offCommand;
+    this.statusCommand = config.statusCommand || defaults.statusCommand;
+    this.pollingInterval = config.pollingInterval || defaults.pollingInterval;
+    this.statusPattern = config.statusPattern || defaults.statusPattern;
+
+    let scope = this;
+
+    const statusevent = pollingtoevent((done) => {
+      if ( this.url + this.statusCommand ) {
+        axios.get( this.url + this.statusCommand, { rejectUnauthorized: false })
+          .then((response) => done(null, response.data))
+          .catch((error) => {
+            this.log.error(`Error fetching status data: ${error.message}`);
+            done(error, null);
+          });
+      } else {
+        this.log.warn(`Error: No statusURL defined in config.json`);
+        done(null, null); // No status URL defined
+      }
+    }, { longpolling: false, interval: this.pollingInterval });
+
+    statusevent.on('poll', (data) => {
+      const statusData = JSON.stringify(data);
+      const switchService = scope;
+      const switchConfig = switchService.switchConfig;
+      if (this.statusPattern != ) {
+        const isOn = !!statusData.match(switchConfig.statusPattern);
+        switchService.getCharacteristic(Characteristic.On).updateValue(isOn);
+      }
+    });
+    
+    statusevent.on('error', (error) => {
+      this.log.error(`Polling error: ${error}`);
+    });
+
+  }
+}
+
+class HTTPActions {
+  constructor(log, config) {
+    this.log = log;
+    this.config = config;
+    this.name = config.name;
+
+    this.defaults = new Object();
+      this.defaults.url = "http://127.0.0.1:80";
+      this.defaults.onCommand = "/on";
+      this.defaults.offCommand = "/off";
+      this.defaults.statusCommand = "/status";
+      this.defaults.pollingInterval = 3000;
+      this.defaults.statusPattern = "ON"; // if response is not ON, than it's OFF
+
+    this.devices = [];
+
+    if (!Array.isArray(config.devices)) { //check for a valid array of switches before trying to create them
+      this.log.error('MultiSwitcheroo switches array is not properly defined. Please define switches in the config & restart, or disable the plugin.');
+    } else {
+      for (const deviceConfig of config.devices) {
+        const deviceName = deviceConfig.name;
+        const deviceService = new HTTPService(this.log. deviceConfig, this.defaults);
+        deviceService.deviceConfig = deviceConfig; // Attach deviceConfig to the service
+        deviceService
+          .getCharacteristic(Characteristic.On)
+          .on('set', (on, callback) => { deviceService.setOn(on, callback, deviceConfig); })
+          .on('get', (callback) => { deviceService.getOn(callback, deviceConfig); });
+
+        this.devices.push(deviceService);
+        this.log.info(`Switch created: ${deviceConfig.name}`);
+      }
+    }
+
+    this.log.info(`${this.name} initialized...`);
+  }
+
+  setOn(on, callback, deviceConfig) {
+    axios.get(on ? deviceConfig.url + deviceConfig.onCommand : deviceConfig.url + deviceConfig.offCommand, { rejectUnauthorized: false })
+      .then((response) => {
+        if (response.status === 200) {
+          callback(null);
+        } else {
+          this.log.warn(`ERROR SETTING ${deviceConfig.name}, CODE: ${response.status}`);
+          callback(new Error(`setOn Invalid response: ${response.status}`));
+        }
+      })
+      .catch((error) => {
+        this.log.error(`setOn ERROR SETTING ${deviceConfig.name}: ${error}`);
+        callback(error);
+      });
+  }
+
+  getOn(callback, deviceConfig) {
+
+    if ( !(deviceConfig.url + deviceConfig.statusCommand) || !deviceConfig.statusPattern ) {
+      return callback(null, false);
+      // this.log.warn(`Make sure status Url & status Pattern are defined properly in your config`);
+    }
+
+
+    axios.get(deviceConfig.url + deviceConfig.statusCommand, { rejectUnauthorized: false })
+      .then((response) => {
+        if (response.status === 200) {
+          
+          const statusData = JSON.stringify(response.data); // Parse the response data
+          const isOn = !!statusData.match(deviceConfig.statusPattern);
+
+          callback(null, isOn);
+          
+        } else {
+          this.log.warn(`getOn REQUEST ERROR: ${deviceConfig.url + deviceConfig.statusCommand}, CODE: ${response.status}`);
+          callback(new Error(`getOn Invalid response: ${response.status}`));
+        }
+      })
+      .catch((error) => {
+        this.log.error(`getOn REQUEST ERROR: ${deviceConfig.url + deviceConfig.statusCommand}, CODE: ${error}`);
+        callback(error);
+      });
+  }
+
+  getServices() {
+    return [this.informationService, ...this.devices];
+  }
+}
+
+
+
+
+/*
+
+class MultiSwitcheroo {
+  constructor(log, config) {
+    this.log = log;
+    this.config = config; // Store the config object
+    this.name = config.name;
+    this.onUrl = config.onUrl;
+    this.offUrl = config.offUrl;
+    this.statusUrl = config.statusUrl;
+    this.pollingInterval = config.pollingInterval || 3000;
+    this.statusPattern = config.statusPattern || '/1/';
+    this.manufacturer = config.manufacturer || 'iSteve-O';
+    this.model = config.model || 'MultiSwitcheroo';
+    this.serialNumber = config.serialNumber || this.name;
+    this.firmwareRevision = config.firmwareRevision || pkgVersion;
+    this.switches = [];
+
+    // const statusemitter = pollingtoevent((done) => {
+    //   if (this.config.statusUrl) {
+    //     axios.get(this.config.statusUrl, { rejectUnauthorized: false })
+    //       .then((response) => done(null, response.data))
+    //       .catch((error) => {
+    //         this.log.error(`Error fetching status data: ${error.message}`);
+    //         done(error, null);
+    //       });
+    //   } else {
+    //     this.log.warn(`Error: No statusURL defined in config.json`);
+    //     done(null, null); // No status URL defined
+    //   }
+    // }, { longpolling: false, interval: this.config.pollingInterval });
+
+    // statusemitter.on('poll', (data) => {
+    //   const statusData = JSON.stringify(data);
+    //   for (const switchService of this.switches) {
+    //     const switchConfig = switchService.switchConfig;
+    //     if (switchConfig.statusPattern) {
+    //       const isOn = !!statusData.match(switchConfig.statusPattern);
+    //       switchService.getCharacteristic(Characteristic.On).updateValue(isOn);
+    //     }
+    //   }
+    // });
+
+    // statusemitter.on('error', (error) => {
+    //   this.log.error(`Polling error: ${error}`);
+    // });
+
+    // if (!Array.isArray(config.switches)) { //check for a valid array of switches before trying to create them
+    //   this.log.error('MultiSwitcheroo switches array is not properly defined. Please define switches in the config & restart, or disable the plugin.');
+    // } else {
+    //   for (const switchConfig of config.switches) {
+    //     const switchName = switchConfig.name;
+    //     const switchService = new Service.Switch(switchName, switchName);
+    //     switchService.switchConfig = switchConfig; // Attach switchConfig to the service
+    //     switchService
+    //       .getCharacteristic(Characteristic.On)
+    //       .on('set', (on, callback) => { this.setOn(on, callback, switchConfig); })
+    //       .on('get', (callback) => { this.getOn(callback, switchConfig); });
+
+    //     this.switches.push(switchService);
+    //     this.log.info(`Switch created: ${switchConfig.name}`);
+    //   }
+    // }
+
+    // this.informationService = new Service.AccessoryInformation();
+    // this.informationService
+    //   .setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
+    //   .setCharacteristic(Characteristic.Model, this.model)
+    //   .setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
+    //   .setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
+
+    // this.log.info(`${this.name} initialized...\n\t|Model: ${this.model}\n\t|Manufacturer: ${this.manufacturer}\n\t|Serial Number: ${this.serialNumber}\n\t|Firmware Version: ${this.firmwareRevision}`);
+  }
+
+  // setOn(on, callback, switchConfig) {
+  //   axios.get(on ? switchConfig.onUrl : switchConfig.offUrl, { rejectUnauthorized: false })
+  //     .then((response) => {
+  //       if (response.status === 200) {
+  //         callback(null);
+  //       } else {
+  //         this.log.warn(`ERROR SETTING ${switchConfig.name}, CODE: ${response.status}`);
+  //         callback(new Error(`setOn Invalid response: ${response.status}`));
+  //       }
+  //     })
+  //     .catch((error) => {
+  //       this.log.error(`setOn ERROR SETTING ${switchConfig.name}: ${error}`);
+  //       callback(error);
+  //     });
+  // }
+
+  // getOn(callback, switchConfig) {
+
+  //   if (!this.config.statusUrl || !switchConfig.statusPattern) {
+  //     return callback(null, false);
+  //     this.log.warn(`Make sure statusUrl & statusPattern are defined properly in your config`);
+  //   }
+
+
+  //   axios.get(this.config.statusUrl, { rejectUnauthorized: false })
+  //     .then((response) => {
+  //       if (response.status === 200) {
+          
+  //         const statusData = JSON.stringify(response.data); // Parse the response data
+  //         const isOn = !!statusData.match(switchConfig.statusPattern);
+
+
+  //         callback(null, isOn);
+          
+  //       } else {
+  //         this.log.warn(`getOn REQUEST ERROR: ${this.config.statusUrl}, CODE: ${response.status}`);
+  //         callback(new Error(`getOn Invalid response: ${response.status}`));
+  //       }
+  //     })
+  //     .catch((error) => {
+  //       this.log.error(`getOn REQUEST ERROR: ${this.config.statusUrl}, CODE: ${error}`);
+  //       callback(error);
+  //     });
+  // }
+
+  // getServices() {
+  //   return [this.informationService, ...this.devices];
+  // }
+}
+*/

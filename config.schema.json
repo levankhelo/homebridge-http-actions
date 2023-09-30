@@ -1,0 +1,127 @@
+{
+	"pluginAlias": "homebridge-http-actions",
+	"pluginType": "accessory",
+	"singular": false,
+	"schema": {
+		"type": "object",
+		"properties": {
+			"accessory": {
+				"title": "homebridge-http-actions",
+				"type": "string",
+				"required": true,
+				"placeholder": "homebridge-http-actions",
+				"default": "homebridge-http-actions",
+				"description": "The type of acccessory must be homebridge-http-actions."
+			},
+			"name": {
+				"type": "string",
+				"title": "Main Switch Name",
+				"required": true,
+                "default": "Master",
+				"description": "The name of the parent accessory for HomeKit."
+			},
+			"url": {
+				"type": "string",
+				"title": "default URL",
+				"required": false,
+                "default": "http://127.0.0.1:80",
+				"description": "default url to be used in all services with undefined url."
+			},
+			"onCommand": {
+				"type": "string",
+				"title": "default ON endpoint",
+				"required": false,
+                "default": "/on",
+				"description": "default endpoint of ON command like: \\on"
+			},
+			"offCommand": {
+				"type": "string",
+				"title": "default OFF endpoint",
+				"required": false,
+                "default": "/off",
+				"description": "default endpoint of OFF command like: \\off"
+			},
+			"statusCommand": {
+				"type": "string",
+				"title": "default STATUS endpoint",
+				"required": false,
+                "default": "/status",
+				"description": "default endpoint for STATUS command like: \\status"
+			},
+			"pollingInterval": {
+				"type": "string",
+				"title": "default polling interval",
+				"required": false,
+                "default": "3000",
+				"description": "default interval to pull status"
+			},
+			"statusPattern": {
+				"type": "string",
+				"title": "default status pattern",
+				"required": false,
+                "default": "ON",
+				"description": "default status pattern to filter responses and detect device status"
+			},
+			"devices": {
+				"type": "array",
+				"title": "list of services and devices",
+				"description": "Array of services and devices to be managed by plugin.",
+				"items": {
+					"type": "object",
+					"properties": {
+						"name": {
+							"title": "Name",
+							"type": "string",
+							"required": true,
+                            "default": "child",
+							"description": "Name of the service"
+						},
+						"url": {
+							"title": "URL to access device",
+							"type": "string",
+							"required": false,
+                            "default": "http://127.0.0.1:80",
+							"description": "Device URL to access to including protocol and port"
+						},
+						"onCommand": {
+							"title": "On endpoint",
+							"type": "string",
+							"required": false,
+                            "default": "/on",
+							"description": "Endpoint to send On request"
+						},
+                        "offCommand": {
+							"title": "Off endpoint",
+							"type": "string",
+							"required": false,
+                            "default": "/off",
+							"description": "Endpoint to send Off request"
+						},
+                        "statusCommand": {
+							"title": "Off endpoint",
+							"type": "string",
+							"required": false,
+                            "default": "/status",
+							"description": "URL to get status from."
+						},
+                        "pollingInterval": {
+							"title": "polling interval",
+							"type": "string",
+							"required": false,
+                            "default": "3000",
+							"description": "status pull interval"
+						},
+						"statusPattern": {
+							"title": "Status Pattern",
+							"type": "string",
+							"format": "regex",
+							"required": true,
+                            "default": "ON",
+							"description": "regexp string to parse from statusURL response to get status."
+						}
+					}
+				}
+			}
+		}
+	}
+}
